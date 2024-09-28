@@ -78,6 +78,8 @@
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
 
+  services.logind.lidSwitchExternalPower = "ignore";
+
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.ren = {
     isNormalUser = true;
@@ -94,11 +96,31 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    vim
     neovim
     htop
     wget
     git
   ];
+
+
+  # Airplay 2
+  nixpkgs.overlays = [
+   (final: prev: { shairport-sync = prev.shairport-sync.override { enableAirplay2 = true; }; })
+  ];
+  systemd.services."nqptp" = {
+    description = "nqptp";
+    enable = true;
+    serviceConfig = {
+      ExecStart = "${pkgs.nqptp}/bin/nqptp";
+      #Restart = "always";
+    };
+    wantedBy = [ "default.target" ];
+  };
+  services.shairport-sync = {
+    enable = true;
+    arguments = "--name=Speaker --verbose --output=alsa"; # -- -d hw:Whatever";
+  };
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
